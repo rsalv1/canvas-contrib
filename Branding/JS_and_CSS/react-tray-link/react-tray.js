@@ -83,7 +83,7 @@ $(document).ready(function() {
 		'class': 'menu-item ic-app-header__menu-list-item',
 		html: '<a id="global_nav_resources_link" href="javascript:void(0)" class="ic-app-header__menu-list-link">' +
 		'<div class="menu-item-icon-container" aria-hidden="true">' +
-		'<i class="ic-icon-svg ic-icon-svg icon-resources"></i>' +
+		'<i class="ic-icon-svg icon-resources"></i>' +
 		'<div class="menu-item__text">' + global_nav_name + '</div>' +
 		'</div></a></li>'
 	});
