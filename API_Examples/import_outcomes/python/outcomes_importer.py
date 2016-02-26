@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-domain = "<yourdomain>.instructure.com"
-token = "<token>"
+domain = "<domain>.instructure.com"
+token = "<access_token>"
 
 ####################################################################################################
 ####################################################################################################
@@ -143,7 +143,6 @@ def getOrCreateOutcome(outcome_to_create):
       vendor_guid_cache['outcomes'][outcome_to_create['vendor_guid']] = createOutcome(outcome_to_create)#group_id,title,description,vendor_guid,mastery_points,ratings)
   return vendor_guid_cache['outcomes'][outcome_to_create['vendor_guid']]
 
-#def createOutcome(group_id,title,description,vendor_guid,mastery_points,ratings):
 def createOutcome(outcome_to_create):
   path = "/api/v1/accounts/self/outcome_groups/%s/outcomes" % outcome_to_create['group_id']
   '''
@@ -159,13 +158,12 @@ def createOutcome(outcome_to_create):
   '''
   headers = {'Authorization':'Bearer %s'%token,'Content-Type':'application/json'}
   url = 'https://%s%s' % (domain,path)
-  #data = json.dumps(outcome_to_create)
-  #print 'path',path,data
-  res = requests.post(url,headers=get_headers(),data=outcome_to_create)
+  data = json.dumps(outcome_to_create)
+  res = requests.post(url,headers=headers,data=data)
   return res.json()
 
 def updateOutcome(outcome_to_update):
-  print 'outcome_to_update',outcome_to_update
+  #print 'outcome_to_update',outcome_to_update
   path = "/api/v1/accounts/self/outcome_groups/%s/outcomes/%s" % (outcome_to_update['outcome_group']['id'],outcome_to_update['outcome']['id'])
   headers = {'Authorization':'Bearer %s'%token,'Content-Type':'application/json'}
   url = 'https://%s%s' % (domain,path)
@@ -183,6 +181,16 @@ def isValidRow(row):
 # Prepare argument parsing
 parser = argparse.ArgumentParser()
 parser.add_argument('--outcomesfile',required=True,help='path to the outcomes.csv file')
+
+fields = [
+    'vendor_guid',
+    'outcome_group_vendor_guid',
+    'parent_outcome_group_vendor_guid',
+    'title',
+    'description',
+    'calculation_method',
+    'calculation_int',
+    'mastery_points']
 if __name__ == '__main__':
     args = parser.parse_args()
     outcomes_file = checkFileReturnCSVReader(args.outcomesfile)
@@ -193,21 +201,29 @@ if __name__ == '__main__':
         
         if outcome_row[0]=="vendor_guid":
           # TODO need to make sure this can be a non-canvas id
-          outcome_data['rating_levels'] = outcome_row[5:]
-          #print 'rating data',outcome_data['rating_levels']
+          # This is the first row of the file, the ratings should be from
+          # column 8 an on
+          outcome_data['rating_levels'] = outcome_row[8:]
         else:
           # If it's not one of these, assume this is an outcome row
-          fields = ['vendor_guid','outcome_group_vendor_guid','parent_outcome_group_vendor_guid','title','description','calculation_method','calculation_int','mastery_points']
           outcome = dict(zip(fields,outcome_row[:8]))
           points_description = ['points','description']
           combo = zip(outcome_data.get('rating_levels'),outcome_row[8:])
           outcome['ratings'] = map(lambda x: dict(zip(points_description,x)),combo)
-          pprint.pprint(outcome)
+
+          #print("*"*50)
+          #pprint.pprint(outcome)
           og = getOrCreateOutcomeGroup(outcome)#['outcome_group'],outcome['outcome_group'],outcome['outcome_group'])
+          #print 'og', og
+          #print("*"*50)
+
           outcome['group_id'] = og['id']
+          outcome['short_description'] = outcome['description']
           if not og:
             print 'OutcomeGroup not found',outcome['outcome_group']
           else:
             outcome['outcome_group_vendor_id'] = og['id']
-            print 'outcome_to_create',outcome['vendor_guid']
-            print "Outcome", getOrCreateOutcome(outcome)
+            #print '# outcome_to_create'
+            outcome['vendor_guid']
+            print "# Outcome Created?"
+            print getOrCreateOutcome(outcome)
