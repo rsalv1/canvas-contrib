@@ -1,10 +1,27 @@
 // THIS IS NOT SUPPORTED BY INSTRUCTURE, WORKS as of 12-4-15
 $(document).ready(function() {
-	var trayLinks = [
-		{key: 'http://www.example.com/your-library', val: 'Library'},
-		{key: 'http://www.google.com', val: 'Google'},
-		{key: 'http://www.example.com/help-desk', val: 'Help Desk'}
-	];
+	if(ENV.current_user_roles.indexOf('teacher') >= 0 || ENV.current_user_roles.indexOf('admin') >= 0){
+		//items to show to teachers and admins
+		var trayLinks = [
+			{key: 'http://www.example.com/your-library', val: 'Teacher Library'},
+			{key: 'http://www.google.com', val: 'Teacher Google'},
+			{key: 'http://www.example.com/help-desk', val: 'Teacher Help Desk'}
+		];
+	} else if (ENV.current_user_roles.indexOf('student') >= 0) {
+		//items to show to students
+		var trayLinks = [
+			{key: 'http://www.example.com/your-library', val: 'Student Library'},
+			{key: 'http://www.google.com', val: 'Student Google'},
+			{key: 'http://www.example.com/help-desk', val: 'Student Help Desk'}
+		];
+	} else {
+		//items to show to people who are not teachers, students or admins
+		var trayLinks = [
+			{key: 'http://www.example.com/your-library', val: 'Other Library'},
+			{key: 'http://www.google.com', val: 'Other Google'},
+			{key: 'http://www.example.com/help-desk', val: 'Other Help Desk'}
+		];
+	}
 
 	var slide_out_title = "Resources" //Changes the title on the slide out menu
 	var global_nav_name = "Resources" //Change the title on the global navigation menu
@@ -51,7 +68,7 @@ $(document).ready(function() {
 
 	function displayLinks(element, index, array) {
 		displayVals += '<li>';
-		displayVals += '<a target="_blank" href="' + element.key + '">' + element.val + '</a>'; //Remove target="_blank" if you do not want the links to open in a new tab.
+		displayVals += '<a href="' + element.key + '">' + element.val + '</a>';
 		displayVals += '</li>';
 	}
 
@@ -83,7 +100,7 @@ $(document).ready(function() {
 		'class': 'menu-item ic-app-header__menu-list-item',
 		html: '<a id="global_nav_resources_link" href="javascript:void(0)" class="ic-app-header__menu-list-link">' +
 		'<div class="menu-item-icon-container" aria-hidden="true">' +
-		'<i class="ic-icon-svg icon-resources"></i>' +
+		'<i class="icon-resources"></i>' +
 		'<div class="menu-item__text">' + global_nav_name + '</div>' +
 		'</div></a></li>'
 	});
