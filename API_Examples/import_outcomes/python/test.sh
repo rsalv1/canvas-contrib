@@ -1,3 +1,1 @@
-#!/usr/bin/env sh
-#nosetests --cover-html tests#
-nosetests tests.test_importer:OutcomeImporterTests  --with-coverage --cover-html --cover-html-dir=coverage_output
+This script has been moved to a the repository at https://github.com/unsupported/canvas

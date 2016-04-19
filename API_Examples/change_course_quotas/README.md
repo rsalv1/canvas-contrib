@@ -1,10 +1,2 @@
-Change Course SIS ID Values
-=========
+This script has been moved to a the repository at https://github.com/unsupported/canvas
 
-There needs to be a column named `course_id`.
-
-There needs to be a column named `quota`. This column needs to be an integer.
-
-Please see the change_course_quota.csv as a template.
-
-*Note:* The course_id should be the SIS ID value.

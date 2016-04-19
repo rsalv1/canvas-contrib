@@ -1,4 +1,2 @@
-# Change SIS ID
-The following Ruby & Python scripts can be used to update SIS ID's from a CSV.
+This script has been moved to a the repository at https://github.com/unsupported/canvas
 
-To use them please update the beginning of either script with information like your access token.

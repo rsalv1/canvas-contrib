@@ -1,8 +1,2 @@
-Google Calendar .ics Into Canvas
-------
+This script has been moved to a the repository at https://github.com/unsupported/canvas
 
-Need to download the .ics file from the calendar.
-
-Gems required: rubygems, icalendar, date, typhoeus, open-uri, json, & cgi.
-
-Complete information for the canvas_url, api, api_token, course_id, & cal_file
