@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 domain = "<domain>.instructure.com"
-token = "<access_token>"
+token = "token_here"
 
 ####################################################################################################
 ####################################################################################################
@@ -17,6 +17,8 @@ import sys,os
 import csv
 import pprint
 
+import re
+p = re.compile('([\w\d]+-){4}[\w\d]+')
 
 def get_headers():
   return {'Authorization': 'Bearer %s' % token}
@@ -35,12 +37,20 @@ def getRootOutcomeGroup():
   #print 'url',url
   return requests.get(url,headers=get_headers(),verify=False).json()
 
+
+import percache
+cache = percache.Cache('./tmp_my_cache')
+
+@cache
+def c_request_get(*args, **kwargs):
+  return requests.get(*args, **kwargs)
+
 def paginated_outcomes(outcome_group_vendor_id=None):
   # Get outcomes
   all_done = False
   url = 'https://{0}/api/v1/accounts/self/outcome_groups/{1}/outcomes'.format(domain,outcome_group_vendor_id)
   while not all_done:
-    response = requests.get(url,headers=get_headers())
+    response = c_request_get(url,headers=get_headers())
     for s in response.json():
       outcome = s['outcome']
       vendor_guid_cache['outcomes'].setdefault(outcome['vendor_guid'],outcome)
@@ -56,7 +66,8 @@ def paginated_outcome_groups():
   url = 'https://%s/api/v1/accounts/self/outcome_groups' % (domain)
   #params = {}
   while not all_done:
-    response = requests.get(url,headers=get_headers())
+    #response = requests.get(url,headers=get_headers())
+    response = c_request_get(url,headers=get_headers())
     for s in response.json():
       vendor_guid_cache['outcome_groups'].setdefault(s['vendor_guid'],s)
       yield s
@@ -72,17 +83,21 @@ def paginated_outcome_subgroups(parent_group_id):
   url = 'https://%s/api/v1/accounts/self/outcome_groups/%d/subgroups' % (domain,int(parent_group_id))
   #params = {}
   while not all_done:
-    response = requests.get(url,headers=get_headers())
+    #response = requests.get(url,headers=get_headers())
+    response = c_request_get(url,headers=get_headers())
     if not response.json():
       #yield []
       return
     else:
-      for s in response.json():
+      j_res = response.json()
+      #print 'j_res', j_res
+      for s in j_res:
         yield s
-        vendor_guid_cache['outcome_groups'].setdefault(s['vendor_guid'],s)
-        for sg in paginated_outcome_subgroups(s['id']):
-          vendor_guid_cache['outcome_groups'].setdefault(s['vendor_guid'],s)
-          yield s
+        vendor_guid_cache['outcome_groups'].setdefault(s['vendor_guid'], s)
+        if not p.match(s['vendor_guid']):
+          for sg in paginated_outcome_subgroups(s['id']):
+            vendor_guid_cache['outcome_groups'].setdefault(sg['vendor_guid'], sg)
+            yield sg
     if 'next' in response.links:
       url = response.links['next']['url']
     else:
@@ -125,6 +140,7 @@ def getOrCreateOutcomeGroup(outcome): #outcome_group_vendor_id,name,description,
       return None
     else:
       # no outcome group was found, create it now
+      print "no outcome group was found, create it now"
       og = createOutcomeGroup(outcome,parent_group['id'])
   return og
 
@@ -197,7 +213,7 @@ if __name__ == '__main__':
     if outcomes_file :
       outcomes = {}
       outcome_data = {}
-      for outcome_row in outcomes_file:
+      for row_num, outcome_row in enumerate(outcomes_file):
         
         if outcome_row[0]=="vendor_guid":
           # TODO need to make sure this can be a non-canvas id
@@ -211,11 +227,11 @@ if __name__ == '__main__':
           combo = zip(outcome_data.get('rating_levels'),outcome_row[8:])
           outcome['ratings'] = map(lambda x: dict(zip(points_description,x)),combo)
 
-          #print("*"*50)
+          print("*"*50)
           #pprint.pprint(outcome)
           og = getOrCreateOutcomeGroup(outcome)#['outcome_group'],outcome['outcome_group'],outcome['outcome_group'])
           #print 'og', og
-          #print("*"*50)
+          print("*"*50)
 
           outcome['group_id'] = og['id']
           outcome['short_description'] = outcome['description']
@@ -225,5 +241,5 @@ if __name__ == '__main__':
             outcome['outcome_group_vendor_id'] = og['id']
             #print '# outcome_to_create'
             outcome['vendor_guid']
-            print "# Outcome Created?"
+            print 'row {}'.format(row_num)
             print getOrCreateOutcome(outcome)
