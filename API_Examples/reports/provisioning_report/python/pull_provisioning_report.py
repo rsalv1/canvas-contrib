@@ -4,12 +4,9 @@ import time, json, os
 import re,pprint
 
 # Change this to match your access token
-token="<access_token>"
-# This should be your account number.  This is the number you see when logged into canvas
-# as an admin.  i.e. https://schoolname.insructure.com/accounts/SOME_NUMBER_HERE
-ACCOUNT_ID = '88888'
+token="<token_here>"
 # Change this to match the domain you use to access Canvas.
-CANVAS_DOMAIN  = "<schoolname>.instructure.com"
+CANVAS_DOMAIN  = "<domain>.instructure.com"
 # Change this to the full path of your desired output folder.  I've set it to the current
 # directory for the sake of this script
 OUTPUT_FOLDER = os.path.dirname(os.path.abspath(__file__))
@@ -17,28 +14,28 @@ OUTPUT_FOLDER = os.path.dirname(os.path.abspath(__file__))
 ENROLLMENT_TERM = False
 
 # Edit each of these to determine which to include in the report
-include_deleted_items = True
+include_deleted_items = False
 do_accounts = True
 do_courses = False
-do_enrollments = True
+do_enrollments = False
 do_sections = False
-do_terms = True
-do_users = True
-do_xlist = True
-do_group_membership = True
-do_groups = True
+do_terms = False
+do_users = False
+do_xlist = False
+do_group_membership = False
+do_groups = False
 
 ###################################################################################
 #### DON'T CHANGE anything after this unless you know what you are doing. #########
 BASE_DOMAIN = "https://%s/api/v1/%%s/" %  CANVAS_DOMAIN
-BASE_URI = BASE_DOMAIN % "accounts/%s/reports" % ACCOUNT_ID
-BASE_START_URI = BASE_DOMAIN % "accounts/%s/reports/%%s" % ACCOUNT_ID
+BASE_URI = BASE_DOMAIN % "accounts/self/reports" 
+BASE_START_URI = BASE_DOMAIN % "accounts/self/reports/%s" 
 BASE_FILE_URI =  BASE_DOMAIN % "files/%s"
 
 # This headers dictionary is used for almost every request
 headers = {"Authorization":"Bearer %s" % token}
 
-""" These are the standard reports every account has access to. """
+""" These are some of the standard reports every account has access to. """
 standard_reports = (
   'student_assignment_outcome_map_csv',
   'grade_export_csv',
@@ -88,29 +85,13 @@ file_id_pattern = re.compile('files\/(\d+)\/download')
 # Once "progress" is 100 then parse out the number between "files" and "download",
 # 22591162 in this case, and use this number to request the files 
 
-# Step 3: Pull out the file number
-try:
-  found_id = file_id_pattern.findall(file_url)[0]
-except:
-  found_id = False
+# Step 3: Download the file
 
-if not found_id:
-  print "I couldn't find the file id"
-else:
+file_info_url = status_response_json['attachment']['url']
+file_response = requests.get(file_info_url,headers=headers,stream=True)
 
-  file_info_url = BASE_FILE_URI % found_id
-  # Step 4: Pull out the Canvas file info from the files API
-  file_info_response = requests.get(file_info_url,headers=headers)
 
-  print file_info_response.text
-  file_info_response_json = file_info_response.json()
-  getter_url = file_info_response_json['url']
-  print 'getter',getter_url
-
-  # Step 5: Finally fetch the file and save it to the output directory
-  end_file_response = requests.get(getter_url,allow_redirects=True)
-
-  print end_file_response.status_code
-  with open(file_info_response_json['filename'],'w+b') as filename:
-    filename.write(end_file_response.content)
+# Step 4: Save the file
+with open(status_response_json['attachment']['filename'],'w+b') as filename:
+    filename.write(file_response.content)
 
